@@ -389,10 +389,10 @@
       return `sing-box://import-remote-profile?url=${encodeURIComponent(rawUrl)}#${encodeURIComponent(profileName)}`;
     }
 
-    function buildNekoBoxImportUri(rawUrl) {
-      if (!rawUrl) return '';
+    function buildNekoBoxImportUri(subscriptionUrl) {
+      if (!subscriptionUrl) return '';
       const name = 'SubHub 订阅';
-      return `sn://subscription?url=${encodeURIComponent(rawUrl)}&name=${encodeURIComponent(name)}`;
+      return `sn://subscription?url=${encodeURIComponent(subscriptionUrl)}&name=${encodeURIComponent(name)}`;
     }
 
     function render() {
@@ -431,13 +431,14 @@
 
       const singboxRaw = links.singbox || '';
       const singboxImport = buildSingboxImportUri(singboxRaw);
-      const nekoboxImport = buildNekoBoxImportUri(singboxRaw);
+      const nekoboxSource = links.v2ray || links.xray || links.raw || '';
+      const nekoboxImport = buildNekoBoxImportUri(nekoboxSource);
 
       const exportItems = [
         { title: 'V2Ray/Xray 合集订阅', displayUrl: links.v2ray || links.xray || '', actionUrl: links.v2ray || links.xray || '', helper: '' },
         { title: 'Clash Meta 合集订阅', displayUrl: links.clash || '', actionUrl: links.clash || '', helper: '' },
         { title: 'sing-box 官方客户端导入', displayUrl: singboxRaw, actionUrl: singboxImport, helper: '二维码与复制内容为 sing-box 官方导入 URI：sing-box://import-remote-profile?...' },
-        { title: 'NekoBox(Android) 导入', displayUrl: singboxRaw, actionUrl: nekoboxImport, helper: '二维码与复制内容为 NekoBox 订阅 URI：sn://subscription?...' },
+        { title: 'NekoBox(Android) 导入', displayUrl: nekoboxSource, actionUrl: nekoboxImport, helper: '二维码与复制内容为 NekoBox 订阅 URI：sn://subscription?...（数据源优先使用 V2Ray/Xray 订阅）' },
         { title: 'Raw 原始合集订阅', displayUrl: links.raw || '', actionUrl: links.raw || '', helper: '' },
       ];
       exportList.innerHTML = '';

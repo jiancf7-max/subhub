@@ -13,7 +13,7 @@
   - `sing-box`: `/sub/{token}/singbox`
 - 前端支持链接复制和二维码展示
 - `sing-box 官方客户端导入` 会输出 `sing-box://import-remote-profile?...`
-- `NekoBox(Android) 导入` 会输出 `sn://subscription?...`
+- `NekoBox(Android) 导入` 会输出 `sn://subscription?...`，并优先使用 `V2Ray/Xray` 数据源
 
 ## 启动
 
