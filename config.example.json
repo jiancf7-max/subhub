@@ -1,0 +1,8 @@
+{
+  "host": "0.0.0.0",
+  "port": 8850,
+  "admin_user": "",
+  "admin_password_hash": "",
+  "session_secret": "",
+  "session_ttl_seconds": 28800
+}

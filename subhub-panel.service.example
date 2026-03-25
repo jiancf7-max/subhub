@@ -1,0 +1,16 @@
+[Unit]
+Description=SubHub Aggregation Panel
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/root/subhub-panel
+ExecStart=/usr/bin/python3 /root/subhub-panel/app.py
+Restart=always
+RestartSec=3
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

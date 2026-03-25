@@ -1,0 +1,534 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SubHub 订阅聚合控制台</title>
+  <style>
+    :root {
+      --bg: #edf1f7;
+      --panel: #ffffff;
+      --card: #f7f9fc;
+      --line: #d6dfea;
+      --text: #24324a;
+      --muted: #6f7f9b;
+      --accent: #2f6fff;
+      --accent2: #1f56cc;
+      --good: #2ca36a;
+      --bad: #c55d68;
+      --warn: #b27a2f;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: var(--text);
+      font-family: "IBM Plex Sans", "Noto Sans SC", sans-serif;
+      background:
+        radial-gradient(1200px 500px at 10% -20%, #dbe7ff, transparent 70%),
+        radial-gradient(1000px 500px at 90% 120%, #dceef5, transparent 70%),
+        var(--bg);
+    }
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: color-mix(in oklab, white 88%, #edf3ff);
+      border-bottom: 1px solid var(--line);
+      padding: 12px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+    .brand h1 { margin: 0; font-size: 20px; }
+    .brand p { margin: 4px 0 0; color: var(--muted); font-size: 12px; }
+
+    .container {
+      max-width: 1360px;
+      margin: 0 auto;
+      padding: 14px;
+      display: grid;
+      gap: 12px;
+    }
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      box-shadow: 0 8px 22px rgba(28, 45, 82, .08);
+      padding: 14px;
+    }
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(180px, 1fr));
+      gap: 10px;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px;
+    }
+    .card .label { margin: 0; color: var(--muted); font-size: 12px; }
+    .card .value { margin: 6px 0 0; font-size: 24px; font-weight: 800; }
+    .good { color: var(--good); }
+    .bad { color: var(--bad); }
+    .warn { color: var(--warn); }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+    .btn {
+      border: 1px solid color-mix(in oklab, var(--line) 65%, #bfcde6);
+      border-radius: 10px;
+      background: white;
+      color: var(--text);
+      padding: 8px 11px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .btn:hover { filter: brightness(1.03); }
+    .btn.primary {
+      color: white;
+      border-color: var(--accent2);
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+    }
+    .btn.danger {
+      color: white;
+      border-color: #a53c47;
+      background: linear-gradient(135deg, #d26a75, #b74a57);
+    }
+    .btn.warn {
+      color: white;
+      border-color: #875112;
+      background: linear-gradient(135deg, #c08831, #9e6b24);
+    }
+
+    .muted { color: var(--muted); font-size: 12px; }
+    .alert { padding: 8px 10px; border-radius: 10px; font-size: 13px; }
+    .alert.ok { background: #e8f7ef; color: #1c7c4b; border: 1px solid #b4e2c9; }
+    .alert.err { background: #fdecef; color: #9c3743; border: 1px solid #f3c3cb; }
+
+    .grid2 {
+      display: grid;
+      grid-template-columns: minmax(420px, 1.25fr) minmax(320px, 1fr);
+      gap: 12px;
+    }
+
+    input {
+      width: 100%;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      padding: 9px 10px;
+      font-size: 14px;
+      outline: none;
+      background: white;
+      color: var(--text);
+    }
+    input:focus { border-color: var(--accent); }
+
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 1.3fr auto;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .table-wrap {
+      overflow: auto;
+      max-height: 430px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      margin-top: 10px;
+    }
+    table { width: 100%; min-width: 980px; border-collapse: collapse; }
+    th, td { border-bottom: 1px solid var(--line); padding: 8px; text-align: left; font-size: 13px; }
+    th { position: sticky; top: 0; background: #f4f7fd; z-index: 2; font-size: 12px; color: var(--muted); }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; word-break: break-all; }
+    .ops { display: flex; flex-wrap: wrap; gap: 6px; }
+
+    .badge {
+      display: inline-block;
+      border-radius: 999px;
+      padding: 3px 8px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .badge.on { color: #0f6f43; background: #dbf5e8; border: 1px solid #9ed8bf; }
+    .badge.off { color: #8f3040; background: #fde3e8; border: 1px solid #f2afbc; }
+
+    .export-list { display: grid; gap: 8px; margin-top: 10px; }
+    .export-item {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px;
+      background: var(--card);
+    }
+    .export-title { margin: 0; font-size: 13px; font-weight: 700; }
+    .export-url { margin: 5px 0 8px; font-size: 12px; color: var(--muted); }
+
+    .qr-mask {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, .45);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 40;
+      padding: 12px;
+    }
+    .qr-mask.show { display: flex; }
+    .qr-card {
+      width: min(420px, 100%);
+      background: white;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      padding: 14px;
+      color: var(--text);
+    }
+    .qr-card h3 { margin: 0 0 8px; font-size: 16px; }
+    .qr-card img {
+      width: 260px;
+      height: 260px;
+      max-width: 100%;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: white;
+    }
+
+    @media (max-width: 1080px) {
+      .cards { grid-template-columns: repeat(2, minmax(180px, 1fr)); }
+      .grid2 { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 760px) {
+      .cards { grid-template-columns: 1fr; }
+      .row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <h1>SubHub 订阅聚合控制台</h1>
+      <p>独立服务，不依赖 cliproxyapi。录入多个订阅，统一测试并导出合集。</p>
+    </div>
+    <div class="actions">
+      <button class="btn" id="btn-refresh">刷新</button>
+      <button class="btn warn" id="btn-test-all">测试全部订阅</button>
+      <button class="btn danger" id="btn-rotate">重置导出 Token</button>
+      <button class="btn" id="btn-logout">退出</button>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="cards">
+      <article class="card"><p class="label">订阅源总数</p><p id="stat-total" class="value">0</p></article>
+      <article class="card"><p class="label">启用中</p><p id="stat-enabled" class="value good">0</p></article>
+      <article class="card"><p class="label">测试成功</p><p id="stat-ok" class="value good">0</p></article>
+      <article class="card"><p class="label">测试失败</p><p id="stat-fail" class="value bad">0</p></article>
+    </section>
+
+    <section id="alert-wrap"></section>
+
+    <section class="grid2">
+      <section class="panel">
+        <h2>订阅源管理</h2>
+        <p class="muted">新增后可单测或批量测试；停用后不参与合集导出。</p>
+
+        <div class="row">
+          <input id="source-name" placeholder="名称（可选），例如 panel-1-hk">
+          <input id="source-url" placeholder="订阅 URL，例如 https://example.com/sub/xxxx">
+          <button class="btn primary" id="btn-add">添加</button>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>名称</th>
+                <th>URL</th>
+                <th>状态</th>
+                <th>最近测试</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody id="rows"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>合集导出</h2>
+        <p class="muted">客户端导入建议：Xray(v2rayN/nekoray)、Clash(Meta系)、sing-box(官方客户端)。</p>
+        <div class="export-list" id="export-list"></div>
+      </section>
+    </section>
+  </main>
+
+  <div class="qr-mask" id="qr-mask">
+    <div class="qr-card" id="qr-card">
+      <h3 id="qr-title">二维码</h3>
+      <img id="qr-image" alt="qr-code">
+      <p id="qr-url" class="mono export-url"></p>
+      <div class="actions">
+        <button class="btn" id="btn-copy-qr">复制链接</button>
+        <button class="btn primary" id="btn-close-qr">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const rowsEl = document.getElementById('rows');
+    const alertWrap = document.getElementById('alert-wrap');
+    const statTotal = document.getElementById('stat-total');
+    const statEnabled = document.getElementById('stat-enabled');
+    const statOk = document.getElementById('stat-ok');
+    const statFail = document.getElementById('stat-fail');
+    const exportList = document.getElementById('export-list');
+
+    const qrMask = document.getElementById('qr-mask');
+    const qrTitle = document.getElementById('qr-title');
+    const qrImage = document.getElementById('qr-image');
+    const qrUrl = document.getElementById('qr-url');
+
+    let stateData = null;
+
+    function showAlert(msg, type = 'ok') {
+      const cls = type === 'err' ? 'alert err' : 'alert ok';
+      alertWrap.innerHTML = `<div class="${cls}">${msg}</div>`;
+      setTimeout(() => {
+        if (alertWrap.innerHTML.includes(msg)) {
+          alertWrap.innerHTML = '';
+        }
+      }, 3500);
+    }
+
+    async function api(path, options = {}) {
+      const init = {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+        ...options,
+      };
+      if (init.body && typeof init.body !== 'string') {
+        init.body = JSON.stringify(init.body);
+      }
+      const resp = await fetch(path, init);
+      const data = await resp.json().catch(() => ({}));
+      if (!resp.ok) {
+        const msg = data.error || `HTTP ${resp.status}`;
+        throw new Error(msg);
+      }
+      return data;
+    }
+
+    function testText(item) {
+      const t = item && typeof item === 'object' ? item : null;
+      if (!t) return '未测试';
+      const status = t.ok ? '可用' : '失败';
+      const ms = Number.isFinite(Number(t.latency_ms)) ? `${t.latency_ms}ms` : '-';
+      const nodes = Number.isFinite(Number(t.node_count)) ? `${t.node_count} 节点` : '-';
+      return `${status} | ${ms} | ${nodes} | ${t.message || '-'}`;
+    }
+
+    async function copyText(text) {
+      if (!text) return;
+      try {
+        await navigator.clipboard.writeText(text);
+        showAlert('链接已复制', 'ok');
+      } catch {
+        showAlert('复制失败，请手动复制', 'err');
+      }
+    }
+
+    function openQr(title, url) {
+      qrTitle.textContent = title;
+      qrUrl.textContent = url;
+      qrImage.src = `https://api.qrserver.com/v1/create-qr-code/?size=260x260&margin=8&data=${encodeURIComponent(url)}`;
+      qrMask.classList.add('show');
+    }
+
+    function closeQr() {
+      qrMask.classList.remove('show');
+    }
+
+    function render() {
+      const stats = stateData?.stats || {};
+      const sources = Array.isArray(stateData?.sources) ? stateData.sources : [];
+      const links = stateData?.export_links || {};
+
+      statTotal.textContent = String(stats.total || 0);
+      statEnabled.textContent = String(stats.enabled || 0);
+      statOk.textContent = String(stats.tested_ok || 0);
+      statFail.textContent = String(stats.tested_fail || 0);
+
+      rowsEl.innerHTML = '';
+      for (const s of sources) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${s.name || '-'}</td>
+          <td class="mono">${s.url || '-'}</td>
+          <td><span class="badge ${s.enabled ? 'on' : 'off'}">${s.enabled ? '启用中' : '已停用'}</span></td>
+          <td>${testText(s.last_test)}</td>
+          <td>
+            <div class="ops">
+              <button class="btn" data-op="test" data-id="${s.id}">测试</button>
+              <button class="btn primary" data-op="toggle" data-id="${s.id}">${s.enabled ? '停用' : '启用'}</button>
+              <button class="btn danger" data-op="del" data-id="${s.id}">删除</button>
+            </div>
+          </td>
+        `;
+        rowsEl.appendChild(tr);
+      }
+      if (sources.length === 0) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = '<td colspan="5" class="muted">暂无订阅源，请先添加。</td>';
+        rowsEl.appendChild(tr);
+      }
+
+      const exportItems = [
+        ['V2Ray/Xray 合集订阅', links.v2ray || links.xray || ''],
+        ['Clash Meta 合集订阅', links.clash || ''],
+        ['sing-box 合集订阅', links.singbox || ''],
+        ['Raw 原始合集订阅', links.raw || ''],
+      ];
+      exportList.innerHTML = '';
+      for (const [title, url] of exportItems) {
+        const div = document.createElement('div');
+        div.className = 'export-item';
+        div.innerHTML = `
+          <p class="export-title">${title}</p>
+          <p class="export-url mono">${url || '-'}</p>
+          <div class="actions">
+            <button class="btn" data-copy="${encodeURIComponent(url)}" ${url ? '' : 'disabled'}>复制</button>
+            <button class="btn primary" data-qr-title="${title}" data-qr-url="${encodeURIComponent(url)}" ${url ? '' : 'disabled'}>二维码</button>
+          </div>
+        `;
+        exportList.appendChild(div);
+      }
+    }
+
+    async function reload() {
+      try {
+        stateData = await api('/api/subhub/state');
+        render();
+      } catch (e) {
+        if (String(e.message || e) === 'unauthorized') {
+          location.href = '/login';
+          return;
+        }
+        showAlert(String(e.message || e), 'err');
+      }
+    }
+
+    document.getElementById('btn-refresh').addEventListener('click', reload);
+
+    document.getElementById('btn-logout').addEventListener('click', async () => {
+      try {
+        await api('/api/logout', { method: 'POST' });
+      } catch {
+        // ignore
+      }
+      location.href = '/login';
+    });
+
+    document.getElementById('btn-add').addEventListener('click', async () => {
+      const name = document.getElementById('source-name').value.trim();
+      const url = document.getElementById('source-url').value.trim();
+      if (!url) {
+        showAlert('请填写订阅 URL', 'err');
+        return;
+      }
+      try {
+        await api('/api/subhub/sources', {
+          method: 'POST',
+          body: { name, url },
+        });
+        document.getElementById('source-url').value = '';
+        showAlert('订阅源已添加', 'ok');
+        await reload();
+      } catch (e) {
+        showAlert(String(e.message || e), 'err');
+      }
+    });
+
+    document.getElementById('btn-test-all').addEventListener('click', async () => {
+      try {
+        const r = await api('/api/subhub/test-all', { method: 'POST' });
+        showAlert(`批量测试完成：共 ${r.tested || 0} 条，成功 ${r.ok_count || 0}，失败 ${r.fail_count || 0}`, 'ok');
+        await reload();
+      } catch (e) {
+        showAlert(String(e.message || e), 'err');
+      }
+    });
+
+    document.getElementById('btn-rotate').addEventListener('click', async () => {
+      if (!confirm('确认重置导出 Token？旧订阅地址将立即失效。')) return;
+      try {
+        await api('/api/subhub/token/rotate', { method: 'POST' });
+        showAlert('导出 Token 已重置', 'ok');
+        await reload();
+      } catch (e) {
+        showAlert(String(e.message || e), 'err');
+      }
+    });
+
+    rowsEl.addEventListener('click', async (e) => {
+      const btn = e.target.closest('button[data-op]');
+      if (!btn) return;
+      const op = btn.dataset.op;
+      const id = btn.dataset.id;
+      if (!id) return;
+
+      const row = (stateData?.sources || []).find((x) => x.id === id);
+      if (!row) return;
+
+      try {
+        if (op === 'test') {
+          await api(`/api/subhub/test/${id}`, { method: 'POST' });
+          showAlert('测试完成', 'ok');
+        } else if (op === 'toggle') {
+          await api(`/api/subhub/sources/${id}`, {
+            method: 'PUT',
+            body: { enabled: !row.enabled },
+          });
+          showAlert(row.enabled ? '已停用' : '已启用', 'ok');
+        } else if (op === 'del') {
+          if (!confirm(`确认删除：${row.name || row.url} ?`)) return;
+          await api(`/api/subhub/sources/${id}`, { method: 'DELETE' });
+          showAlert('已删除订阅源', 'ok');
+        }
+        await reload();
+      } catch (e2) {
+        showAlert(String(e2.message || e2), 'err');
+      }
+    });
+
+    exportList.addEventListener('click', async (e) => {
+      const copyBtn = e.target.closest('button[data-copy]');
+      if (copyBtn) {
+        const url = decodeURIComponent(copyBtn.dataset.copy || '');
+        await copyText(url);
+        return;
+      }
+      const qrBtn = e.target.closest('button[data-qr-url]');
+      if (qrBtn) {
+        const title = qrBtn.dataset.qrTitle || '二维码';
+        const url = decodeURIComponent(qrBtn.dataset.qrUrl || '');
+        openQr(title, url);
+      }
+    });
+
+    document.getElementById('btn-close-qr').addEventListener('click', closeQr);
+    document.getElementById('btn-copy-qr').addEventListener('click', () => copyText(qrUrl.textContent || ''));
+    qrMask.addEventListener('click', (e) => {
+      if (e.target === qrMask) closeQr();
+    });
+
+    reload();
+    setInterval(reload, 5000);
+  </script>
+</body>
+</html>

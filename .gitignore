@@ -1,0 +1,19 @@
+# Runtime secrets / private data
+config.json
+subhub_data.json
+.env
+*.env
+
+# TLS/private keys
+*.pem
+*.key
+*.crt
+
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Logs/temp
+*.log
+*.tmp
+.DS_Store

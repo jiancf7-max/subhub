@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SubHub 登录</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card: #111b34;
+      --line: #2a3966;
+      --text: #e6eeff;
+      --muted: #9aa8cc;
+      --accent: #4f8cff;
+      --danger: #d26a75;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      background:
+        radial-gradient(1200px 600px at 10% -20%, #1c2a4d, transparent 70%),
+        radial-gradient(800px 500px at 90% 120%, #1a355f, transparent 70%),
+        var(--bg);
+      color: var(--text);
+      font-family: "IBM Plex Sans", "Noto Sans SC", sans-serif;
+      padding: 16px;
+    }
+    .card {
+      width: min(420px, 100%);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: color-mix(in oklab, var(--card) 92%, black);
+      padding: 20px;
+      box-shadow: 0 16px 40px rgba(0,0,0,.3);
+    }
+    h1 { margin: 0 0 8px; font-size: 22px; }
+    p { margin: 0 0 14px; color: var(--muted); font-size: 13px; }
+    label { display: block; margin: 10px 0 6px; font-size: 13px; color: var(--muted); }
+    input {
+      width: 100%;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: #0e1832;
+      color: var(--text);
+      padding: 10px;
+      outline: none;
+    }
+    input:focus { border-color: var(--accent); }
+    button {
+      margin-top: 14px;
+      width: 100%;
+      border-radius: 10px;
+      border: 1px solid color-mix(in oklab, var(--accent) 70%, #2f63c7);
+      background: linear-gradient(135deg, var(--accent), #2f63c7);
+      color: white;
+      padding: 10px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .err { margin-top: 10px; color: var(--danger); font-size: 13px; min-height: 18px; }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <h1>SubHub 聚合面板</h1>
+    <p>独立服务，和 cliproxy 面板完全隔离。</p>
+
+    <form id="login-form">
+      <label>用户名</label>
+      <input id="username" value="admin" autocomplete="username" required>
+
+      <label>密码</label>
+      <input id="password" type="password" autocomplete="current-password" required>
+
+      <button type="submit">登录</button>
+      <div class="err" id="err"></div>
+    </form>
+  </main>
+
+  <script>
+    const form = document.getElementById('login-form');
+    const err = document.getElementById('err');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      err.textContent = '';
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value;
+      try {
+        const resp = await fetch('/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password }),
+        });
+        const data = await resp.json().catch(() => ({}));
+        if (!resp.ok || !data.ok) {
+          err.textContent = data.error || `HTTP ${resp.status}`;
+          return;
+        }
+        location.href = '/';
+      } catch (e2) {
+        err.textContent = String(e2);
+      }
+    });
+  </script>
+</body>
+</html>
