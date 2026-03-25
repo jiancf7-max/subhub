@@ -169,6 +169,22 @@
     }
     .export-title { margin: 0; font-size: 13px; font-weight: 700; }
     .export-url { margin: 5px 0 8px; font-size: 12px; color: var(--muted); }
+    .security-box {
+      margin-top: 12px;
+      border: 1px dashed var(--line);
+      border-radius: 12px;
+      padding: 10px;
+      background: #fbfcff;
+    }
+    .security-box h3 {
+      margin: 0 0 6px;
+      font-size: 14px;
+    }
+    .stack {
+      display: grid;
+      gap: 8px;
+      margin-top: 8px;
+    }
 
     .qr-mask {
       position: fixed;
@@ -264,6 +280,19 @@
         <h2>合集导出</h2>
         <p class="muted">客户端导入建议：Xray(v2rayN/nekoray)、Clash(Meta系)、sing-box(官方客户端)。</p>
         <div class="export-list" id="export-list"></div>
+
+        <div class="security-box">
+          <h3>账号安全</h3>
+          <p class="muted">修改管理员密码需要先输入当前密码，至少 8 位。</p>
+          <div class="stack">
+            <input id="pwd-current" type="password" placeholder="当前密码">
+            <input id="pwd-new" type="password" placeholder="新密码（至少 8 位）">
+            <input id="pwd-confirm" type="password" placeholder="确认新密码">
+            <div class="actions">
+              <button class="btn primary" id="btn-change-password">修改密码</button>
+            </div>
+          </div>
+        </div>
       </section>
     </section>
   </main>
@@ -470,6 +499,42 @@
         await api('/api/subhub/token/rotate', { method: 'POST' });
         showAlert('导出 Token 已重置', 'ok');
         await reload();
+      } catch (e) {
+        showAlert(String(e.message || e), 'err');
+      }
+    });
+
+    document.getElementById('btn-change-password').addEventListener('click', async () => {
+      const currentPassword = document.getElementById('pwd-current').value || '';
+      const newPassword = document.getElementById('pwd-new').value || '';
+      const confirmPassword = document.getElementById('pwd-confirm').value || '';
+
+      if (!currentPassword || !newPassword || !confirmPassword) {
+        showAlert('请完整填写当前密码和新密码', 'err');
+        return;
+      }
+      if (newPassword.length < 8) {
+        showAlert('新密码长度至少 8 位', 'err');
+        return;
+      }
+      if (newPassword !== confirmPassword) {
+        showAlert('两次输入的新密码不一致', 'err');
+        return;
+      }
+
+      try {
+        await api('/api/account/password', {
+          method: 'POST',
+          body: {
+            current_password: currentPassword,
+            new_password: newPassword,
+            confirm_password: confirmPassword,
+          },
+        });
+        document.getElementById('pwd-current').value = '';
+        document.getElementById('pwd-new').value = '';
+        document.getElementById('pwd-confirm').value = '';
+        showAlert('密码修改成功', 'ok');
       } catch (e) {
         showAlert(String(e.message || e), 'err');
       }

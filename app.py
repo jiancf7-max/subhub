@@ -5,8 +5,8 @@ from pathlib import Path
 
 from aiohttp import web
 
-from config import BASE_DIR, AppConfig, load_config
-from security import build_session_token, parse_session_token, verify_password
+from config import BASE_DIR, AppConfig, load_config, save_config
+from security import build_session_token, hash_password, parse_session_token, verify_password
 from subhub_service import SubHubService
 
 
@@ -113,6 +113,29 @@ async def api_logout(request: web.Request) -> web.Response:
     resp = _json({"ok": True})
     resp.del_cookie(SESSION_COOKIE, path="/")
     return resp
+
+
+async def api_change_password(request: web.Request) -> web.Response:
+    _require_auth(request)
+    ctx: AppContext = request.app["ctx"]
+    payload = await _json_body(request)
+
+    current_password = str(payload.get("current_password") or "")
+    new_password = str(payload.get("new_password") or "")
+    confirm_password = str(payload.get("confirm_password") or "")
+
+    if not verify_password(current_password, ctx.cfg.admin_password_hash):
+        return _json({"ok": False, "error": "当前密码不正确"}, status=400)
+    if len(new_password) < 8:
+        return _json({"ok": False, "error": "新密码长度至少 8 位"}, status=400)
+    if new_password != confirm_password:
+        return _json({"ok": False, "error": "两次输入的新密码不一致"}, status=400)
+    if new_password == current_password:
+        return _json({"ok": False, "error": "新密码不能与当前密码相同"}, status=400)
+
+    ctx.cfg.admin_password_hash = hash_password(new_password)
+    save_config(ctx.cfg)
+    return _json({"ok": True})
 
 
 async def api_healthz(request: web.Request) -> web.Response:
@@ -251,6 +274,7 @@ def create_app() -> web.Application:
     app.router.add_get("/healthz", api_healthz)
     app.router.add_post("/api/login", api_login)
     app.router.add_post("/api/logout", api_logout)
+    app.router.add_post("/api/account/password", api_change_password)
 
     app.router.add_get("/api/subhub/state", api_subhub_state)
     app.router.add_post("/api/subhub/sources", api_subhub_add_source)

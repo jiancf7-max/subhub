@@ -4,6 +4,7 @@ import base64
 import hashlib
 import hmac
 import json
+import secrets
 import time
 from typing import Any
 
@@ -15,6 +16,18 @@ def _urlsafe_b64encode(raw: bytes) -> str:
 def _urlsafe_b64decode(text: str) -> bytes:
     padding = "=" * ((4 - len(text) % 4) % 4)
     return base64.urlsafe_b64decode((text + padding).encode("ascii"))
+
+
+def hash_password(password: str, salt: str | None = None, iterations: int = 260000) -> str:
+    salt = salt or base64.urlsafe_b64encode(secrets.token_bytes(16)).decode("ascii").rstrip("=")
+    digest = hashlib.pbkdf2_hmac(
+        "sha256",
+        password.encode("utf-8"),
+        salt.encode("utf-8"),
+        int(iterations),
+    )
+    digest_text = _urlsafe_b64encode(digest)
+    return f"pbkdf2_sha256${int(iterations)}${salt}${digest_text}"
 
 
 def verify_password(password: str, encoded: str) -> bool:

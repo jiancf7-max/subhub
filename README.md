@@ -40,6 +40,7 @@ export SUBHUB_ADMIN_PASSWORD='your_strong_password'
 ## API（需登录）
 
 - `GET /api/subhub/state`
+- `POST /api/account/password`
 - `POST /api/subhub/sources`
 - `PUT /api/subhub/sources/{source_id}`
 - `DELETE /api/subhub/sources/{source_id}`
