@@ -12,6 +12,7 @@
   - `Clash Meta`: `/sub/{token}/clash`
   - `sing-box`: `/sub/{token}/singbox`
 - 前端支持链接复制和二维码展示
+- `sing-box` 的二维码和复制内容会输出官方导入 URI（`sing-box://import-remote-profile?...`）
 
 ## 启动
 

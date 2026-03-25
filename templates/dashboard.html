@@ -383,6 +383,12 @@
       qrMask.classList.remove('show');
     }
 
+    function buildSingboxImportUri(rawUrl) {
+      if (!rawUrl) return '';
+      const profileName = 'SubHub 聚合订阅';
+      return `sing-box://import-remote-profile?url=${encodeURIComponent(rawUrl)}#${encodeURIComponent(profileName)}`;
+    }
+
     function render() {
       const stats = stateData?.stats || {};
       const sources = Array.isArray(stateData?.sources) ? stateData.sources : [];
@@ -417,22 +423,30 @@
         rowsEl.appendChild(tr);
       }
 
+      const singboxRaw = links.singbox || '';
+      const singboxImport = buildSingboxImportUri(singboxRaw);
+
       const exportItems = [
-        ['V2Ray/Xray 合集订阅', links.v2ray || links.xray || ''],
-        ['Clash Meta 合集订阅', links.clash || ''],
-        ['sing-box 合集订阅', links.singbox || ''],
-        ['Raw 原始合集订阅', links.raw || ''],
+        { title: 'V2Ray/Xray 合集订阅', displayUrl: links.v2ray || links.xray || '', actionUrl: links.v2ray || links.xray || '', helper: '' },
+        { title: 'Clash Meta 合集订阅', displayUrl: links.clash || '', actionUrl: links.clash || '', helper: '' },
+        { title: 'sing-box 合集订阅', displayUrl: singboxRaw, actionUrl: singboxImport, helper: '二维码与复制内容为 sing-box 导入 URI（官方支持）' },
+        { title: 'Raw 原始合集订阅', displayUrl: links.raw || '', actionUrl: links.raw || '', helper: '' },
       ];
       exportList.innerHTML = '';
-      for (const [title, url] of exportItems) {
+      for (const item of exportItems) {
+        const title = item.title;
+        const displayUrl = item.displayUrl || '';
+        const actionUrl = item.actionUrl || '';
+        const helper = item.helper || '';
         const div = document.createElement('div');
         div.className = 'export-item';
         div.innerHTML = `
           <p class="export-title">${title}</p>
-          <p class="export-url mono">${url || '-'}</p>
+          <p class="export-url mono">${displayUrl || '-'}</p>
+          ${helper ? `<p class="muted">${helper}</p>` : ''}
           <div class="actions">
-            <button class="btn" data-copy="${encodeURIComponent(url)}" ${url ? '' : 'disabled'}>复制</button>
-            <button class="btn primary" data-qr-title="${title}" data-qr-url="${encodeURIComponent(url)}" ${url ? '' : 'disabled'}>二维码</button>
+            <button class="btn" data-copy="${encodeURIComponent(actionUrl)}" ${actionUrl ? '' : 'disabled'}>复制</button>
+            <button class="btn primary" data-qr-title="${title}" data-qr-url="${encodeURIComponent(actionUrl)}" ${actionUrl ? '' : 'disabled'}>二维码</button>
           </div>
         `;
         exportList.appendChild(div);
