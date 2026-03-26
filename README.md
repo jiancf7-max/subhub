@@ -7,13 +7,15 @@
 - 登录后管理多个订阅源（添加 / 启停 / 删除）
 - 单个或批量测试连通性（状态码、延迟、节点数）
 - 导出四种合集订阅：
+  - `NekoBox`: `/sub/{token}/nekobox`
   - `Xray`: `/sub/{token}/xray`
   - `Raw`: `/sub/{token}/raw`
   - `Clash Meta`: `/sub/{token}/clash`
   - `sing-box`: `/sub/{token}/singbox`
+  - `sing-box full`: `/sub/{token}/singboxfull`
 - 前端支持链接复制和二维码展示
 - `sing-box 官方客户端导入` 会输出 `sing-box://import-remote-profile?...`
-- `NekoBox(Android) 导入` 会输出 `sn://subscription?...`，并优先使用 `V2Ray/Xray` 数据源
+- `NekoBox(Android) 导入` 会输出 `sn://subscription?...`，并优先使用 `sing-box outbounds` 数据源
 
 ## 启动
 
@@ -38,6 +40,8 @@ export SUBHUB_ADMIN_PASSWORD='your_strong_password'
 ```
 
 如果未设置，服务首次启动会自动生成随机管理员用户名和密码，并写入启动日志。
+
+说明：若设置了 `SUBHUB_ADMIN_USER` / `SUBHUB_ADMIN_PASSWORD`（或 `SUBHUB_ADMIN_PASSWORD_HASH`），启动时会覆盖 `config.json` 中对应管理员字段，便于跨机器部署时重置登录凭据。
 
 ## API（需登录）
 

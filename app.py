@@ -265,6 +265,9 @@ async def api_sub_export(request: web.Request) -> web.Response:
 
 
 def create_app() -> web.Application:
+    # Keep startup resilient on fresh clones where `static/` may be empty/missing.
+    STATIC_DIR.mkdir(parents=True, exist_ok=True)
+
     app = web.Application(client_max_size=2 * 1024 * 1024)
     app["ctx"] = AppContext()
 

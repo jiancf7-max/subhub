@@ -51,20 +51,49 @@ def load_config(path: Path = CONFIG_PATH) -> AppConfig:
         if hasattr(cfg, key):
             setattr(cfg, key, value)
 
+    # Environment variables override values from config.json when provided.
+    env_host = os.environ.get("SUBHUB_HOST", "").strip()
+    if env_host:
+        cfg.host = env_host
+
+    env_port = os.environ.get("SUBHUB_PORT", "").strip()
+    if env_port:
+        try:
+            cfg.port = int(env_port)
+        except Exception:
+            pass
+
+    env_user = os.environ.get("SUBHUB_ADMIN_USER", "").strip()
+    if env_user:
+        cfg.admin_user = env_user
+
+    env_password_hash = os.environ.get("SUBHUB_ADMIN_PASSWORD_HASH", "").strip()
+    if env_password_hash:
+        cfg.admin_password_hash = env_password_hash
+    else:
+        env_password = os.environ.get("SUBHUB_ADMIN_PASSWORD", "").strip()
+        if env_password:
+            cfg.admin_password_hash = _pbkdf2_hash(env_password)
+
+    env_session_secret = os.environ.get("SUBHUB_SESSION_SECRET", "").strip()
+    if env_session_secret:
+        cfg.session_secret = env_session_secret
+
+    env_session_ttl = os.environ.get("SUBHUB_SESSION_TTL_SECONDS", "").strip()
+    if env_session_ttl:
+        try:
+            cfg.session_ttl_seconds = int(env_session_ttl)
+        except Exception:
+            pass
+
     if not cfg.admin_user:
-        env_user = os.environ.get("SUBHUB_ADMIN_USER", "").strip()
-        if env_user:
-            cfg.admin_user = env_user
-        else:
-            cfg.admin_user = f"admin_{secrets.token_hex(3)}"
-            print(f"[SubHub] Generated initial admin username: {cfg.admin_user}")
+        cfg.admin_user = f"admin_{secrets.token_hex(3)}"
+        print(f"[SubHub] Generated initial admin username: {cfg.admin_user}")
 
     if not cfg.admin_password_hash:
-        init_password = os.environ.get("SUBHUB_ADMIN_PASSWORD", "").strip()
-        if not init_password:
-            init_password = base64.urlsafe_b64encode(secrets.token_bytes(18)).decode("ascii").rstrip("=")
-            print(f"[SubHub] Generated initial admin password for user '{cfg.admin_user}': {init_password}")
-            print("[SubHub] Please log in and change the credentials immediately.")
+        init_password = base64.urlsafe_b64encode(secrets.token_bytes(18)).decode("ascii").rstrip("=")
+        print(f"[SubHub] Generated initial admin password for user '{cfg.admin_user}': {init_password}")
+        print("[SubHub] Please log in and change the credentials immediately.")
         cfg.admin_password_hash = _pbkdf2_hash(init_password)
 
     if not cfg.session_secret:
