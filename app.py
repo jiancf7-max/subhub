@@ -250,7 +250,7 @@ async def api_sub_export(request: web.Request) -> web.Response:
     token = str(request.match_info.get("token") or "").strip()
     fmt = str(request.match_info.get("fmt") or "xray").strip().lower() or "xray"
 
-    if fmt not in {"xray", "v2ray", "raw", "clash", "singbox"}:
+    if fmt not in {"nekobox", "xray", "v2ray", "raw", "clash", "singbox", "singboxfull"}:
         return _json({"ok": False, "error": "unsupported format"}, status=400)
 
     if not await ctx.subhub.verify_token(token):
